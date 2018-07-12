@@ -10,4 +10,4 @@ nvm use --delete-prefix "${START_NODE_VERSION}"
 
 . config/env.sh
 
-forever -o ../server.log -e ../error.log -l ../forever.$service.log --uid $service start index.js
+forever -a -o ../$service.log -e ../$service.error.log --uid $service start index.js
