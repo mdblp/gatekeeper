@@ -1,33 +1,33 @@
 {
-  "name": "gatekeeper",
-  "version": "0.1.0",
-  "description": "Authorization server",
-  "main": "index.js",
-  "directories": {
-    "lib": "./lib"
-  },
-  "scripts": {
-    "lint": "jshint lib test",
-    "start": "node index.js",
-    "test": "mocha"
-  },
-  "repository": "https://github.com/tidepool-org/gatekeeper.git",
-  "author": "Tidepool",
-  "license": "BSD-2-Clause",
-  "dependencies": {
-    "amoeba": "0.4.1",
-    "async": "2.6.2",
-    "bunyan": "1.8.12",
-    "hakken": "0.1.11",
-    "lodash": "4.17.11",
-    "mongodb": "3.2.3",
-    "restify": "8.3.0",
-    "user-api-client": "0.4.1"
-  },
-  "devDependencies": {
-    "jshint": "2.10.2",
-    "mocha": "6.1.4",
-    "salinity": "0.0.8",
-    "tidepool-gatekeeper": "0.2.3"
-  }
+ "name": "gatekeeper",
+ "version": "0.2.0",
+ "description": "Authorization server",
+ "main": "index.js",
+ "directories": {
+  "lib": "./lib"
+ },
+ "scripts": {
+  "lint": "jshint lib test",
+  "start": "node index.js",
+  "test": "mocha"
+ },
+ "repository": "https://github.com/tidepool-org/gatekeeper.git",
+ "author": "Tidepool",
+ "license": "BSD-2-Clause",
+ "dependencies": {
+  "amoeba": "0.4.1",
+  "async": "2.6.2",
+  "bunyan": "1.8.12",
+  "hakken": "0.1.11",
+  "lodash": "4.17.11",
+  "mongodb": "3.2.3",
+  "restify": "8.3.0",
+  "user-api-client": "0.4.1"
+ },
+ "devDependencies": {
+  "jshint": "2.10.2",
+  "mocha": "6.1.4",
+  "salinity": "0.0.8",
+  "tidepool-gatekeeper": "0.2.3"
+ }
 }
