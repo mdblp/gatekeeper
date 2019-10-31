@@ -1,13 +1,14 @@
 FROM node:10.15.3-alpine
 
-RUN apk --no-cache update && \
-    apk --no-cache upgrade
-
 WORKDIR /app
 
 COPY package.json package.json
 
-RUN npm install
+RUN apk --no-cache update && \
+    apk --no-cache upgrade && \
+    apk --no-cache add make python g++ && \
+    npm install && \
+    apk del make python g++
 
 USER node
 
