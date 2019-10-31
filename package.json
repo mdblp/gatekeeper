@@ -25,6 +25,7 @@
   "user-api-client": "0.4.1"
  },
  "devDependencies": {
+  "chai-http": "^4.3.0",
   "jshint": "2.10.2",
   "mocha": "6.1.4",
   "salinity": "0.0.8",
