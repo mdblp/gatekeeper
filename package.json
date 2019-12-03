@@ -29,6 +29,6 @@
   "jshint": "2.10.2",
   "mocha": "6.1.4",
   "salinity": "0.0.8",
-  "tidepool-gatekeeper": "0.2.3"
+  "tidepool-gatekeeper": "0.2.5"
  }
 }
