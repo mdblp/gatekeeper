@@ -1,6 +1,6 @@
 {
  "name": "gatekeeper",
- "version": "0.2.0",
+ "version": "0.2.1",
  "description": "Authorization server",
  "main": "index.js",
  "directories": {
@@ -9,26 +9,28 @@
  "scripts": {
   "lint": "jshint lib test",
   "start": "node index.js",
-  "test": "mocha"
+  "test": "mocha",
+  "audit": "./node_modules/.bin/audit-ci --moderate --registry=https://registry.npmjs.org"
  },
  "repository": "https://github.com/tidepool-org/gatekeeper.git",
  "author": "Tidepool",
  "license": "BSD-2-Clause",
  "dependencies": {
-  "amoeba": "0.4.1",
+  "amoeba": "0.4.2",
   "async": "2.6.2",
   "bunyan": "1.8.12",
-  "hakken": "0.1.11",
-  "lodash": "4.17.11",
+  "hakken": "^0.2.1",
+  "lodash": "^4.17.15",
   "mongodb": "3.2.3",
   "restify": "8.3.0",
-  "user-api-client": "0.4.1"
+  "user-api-client": "^0.5.1"
  },
  "devDependencies": {
+  "audit-ci": "^2.4.2",
   "chai-http": "^4.3.0",
   "jshint": "2.10.2",
   "mocha": "6.1.4",
   "salinity": "0.0.8",
-  "tidepool-gatekeeper": "0.2.3"
+  "tidepool-gatekeeper": "0.2.5"
  }
 }

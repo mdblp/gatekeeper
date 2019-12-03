@@ -43,6 +43,7 @@ services:
   - mongodb
 
 script:
-  - npm run lint
   - npm test
+  - npm run lint
+  - npm audit --registry=https://registry.npmjs.org
   - ./artifact.sh
