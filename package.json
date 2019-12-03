@@ -10,7 +10,7 @@
   "lint": "jshint lib test",
   "start": "node index.js",
   "test": "mocha",
-  "audit": "./node_modules/.bin/audit-ci --moderate --registry https://registry.npmjs.org"
+  "audit": "./node_modules/.bin/audit-ci --moderate --registry=https://registry.npmjs.org"
  },
  "repository": "https://github.com/tidepool-org/gatekeeper.git",
  "author": "Tidepool",

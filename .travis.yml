@@ -45,5 +45,5 @@ services:
 script:
   - npm test
   - npm run lint
-  - npm run audit
+  - npm audit --registry=https://registry.npmjs.org
   - ./artifact.sh
