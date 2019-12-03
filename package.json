@@ -9,7 +9,8 @@
  "scripts": {
   "lint": "jshint lib test",
   "start": "node index.js",
-  "test": "mocha"
+  "test": "mocha",
+  "audit": "./node_modules/.bin/audit-ci --moderate --registry https://registry.npmjs.org"
  },
  "repository": "https://github.com/tidepool-org/gatekeeper.git",
  "author": "Tidepool",
@@ -25,6 +26,7 @@
   "user-api-client": "^0.5.1"
  },
  "devDependencies": {
+  "audit-ci": "^2.4.2",
   "chai-http": "^4.3.0",
   "jshint": "2.10.2",
   "mocha": "6.1.4",
