@@ -6,11 +6,12 @@
  "directories": {
   "lib": "./lib"
  },
- "scripts": {
+  "scripts": {
   "lint": "jshint lib test",
   "start": "node index.js",
   "test": "mocha",
-  "audit": "./node_modules/.bin/audit-ci --moderate --registry=https://registry.npmjs.org"
+  "audit": "./node_modules/.bin/audit-ci --moderate --registry=https://registry.npmjs.org",
+  "build-doc": "apidoc-openapi --project ./apidoc.json --src lib --out doc/$npm_package_name-$npm_package_version.json"
  },
  "repository": "https://github.com/tidepool-org/gatekeeper.git",
  "author": "Tidepool",
@@ -26,6 +27,7 @@
   "user-api-client": "^0.5.1"
  },
  "devDependencies": {
+  "@forfuture/apidoc-openapi": "0.0.1",
   "audit-ci": "^2.4.2",
   "chai-http": "^4.3.0",
   "jshint": "2.10.2",
