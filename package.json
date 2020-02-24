@@ -11,7 +11,7 @@
   "start": "node index.js",
   "test": "mocha",
   "audit": "./node_modules/.bin/audit-ci --moderate --registry=https://registry.npmjs.org",
-  "build-doc": "apidoc-openapi --project ./apidoc.json --src lib --out doc/$npm_package_name-$npm_package_version.json"
+  "build-doc": "qa/buildDoc.sh --version=$npm_package_version --apis=lib/*.js --project=$npm_package_name"
  },
  "repository": "https://github.com/tidepool-org/gatekeeper.git",
  "author": "Tidepool",
@@ -33,6 +33,7 @@
   "jshint": "2.10.2",
   "mocha": "6.1.4",
   "salinity": "0.0.8",
+  "swagger-jsdoc": "^3.5.0",
   "tidepool-gatekeeper": "0.2.5"
  }
 }
