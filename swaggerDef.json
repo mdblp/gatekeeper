@@ -5,7 +5,7 @@
     "version": "0.2.1",
     "description": "Gatekeeper is the Authentication service for YourLoops",
     "license": {
-      "name": "BSD-3-Clause",
+      "name": "BSD-2-Clause",
       "url": "https://opensource.org/licenses/BSD-3-Clause"
     },
     "contact": {

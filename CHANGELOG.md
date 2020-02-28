@@ -1,6 +1,11 @@
 # Gatekeeper
 Authorization client and server for tidepool
 
+## Unreleased
+
+### Engineering
+- PT-996 Document API as openapi
+
 ## 0.2.1 - 2019-11-29
 - PT-89 Update dependencies and node version to fix security issues.
   Enable npm audit scan in travis.
