@@ -27,3 +27,5 @@ node_modules
 deploy/
 artifact_node.sh
 doc/
+
+.vscode/launch.json
