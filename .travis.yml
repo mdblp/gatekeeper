@@ -10,6 +10,7 @@ env:
     - BUILD_OPENAPI_DOC=true
 
 install:
+  - npm install -g npm@latest
   - npm install
 
 addons:
@@ -66,5 +67,5 @@ services:
 script:
   - npm test
   - npm run lint
-  - npm audit --registry=https://registry.npmjs.org
+  - npm audit --registry=https://registry.npmjs.org --audit-level=moderate
   - ./artifact.sh
