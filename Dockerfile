@@ -37,6 +37,7 @@ CMD ["npm", "start"]
 ### Stage 3 - Serve production-ready release
 FROM base as production
 ENV NODE_ENV=production
+RUN apk del .build-dependencies
 # Copy only `node_modules` needed to run the server
 COPY --from=dependencies /app/production_node_modules ./node_modules
 # Copy source files

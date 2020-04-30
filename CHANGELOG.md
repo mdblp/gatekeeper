@@ -1,6 +1,10 @@
 # Gatekeeper
 Authorization client and server for tidepool
 
+## Unreleased
+### Changed
+- PT-1277 Integrate Tidepool master for gatekeeper
+
 ## 0.2.2 - 2020-03-30
 ### Engineering
 - PT-996 Document API as openapi
