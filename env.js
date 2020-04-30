@@ -22,6 +22,7 @@ var fs = require('fs');
 
 var config = require('amoeba').config;
 var cs = require('amoeba').mongoUtil.toConnectionString;
+const version = require('./package.json').version;
 
 function maybeReplaceWithContentsOfFile(obj, field)
 {
@@ -33,7 +34,7 @@ function maybeReplaceWithContentsOfFile(obj, field)
 
 module.exports = (function() {
   var env = {};
-
+  env.version = version;
   // The port to attach an HTTP listener, if null, no HTTP listener will be attached
   env.httpPort = config.fromEnvironment('PORT', null);
 

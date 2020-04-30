@@ -3,9 +3,14 @@ sudo: false
 language: node_js
 
 node_js:
-  - 10.14.2
+  - 10.15.3
+
+env:
+  jobs:
+    - BUILD_OPENAPI_DOC=true
 
 install:
+  - npm install -g npm@latest
   - npm install
 
 addons:
@@ -14,18 +19,53 @@ addons:
       - mongodb-3.2-trusty
     packages:
       - mongodb-org-server
-  artifacts:
-    s3_region: us-west-2
-    paths:
-      - $(git ls-files -o deploy/*/*-*.tar.gz | tr "\n" ":")
-    target_paths:
-      - /
+
+deploy:
+  # Control deployment by setting a value for `on`. Setting the `branch`
+  # option to `master` means Travis will only attempt a deployment on
+  # builds of your repo's master branch (e.g., after you merge a PR).
+  - provider: s3
+    on:
+      tags: true
+    # You can refer to environment variables from Travis repo settings!
+    access_key_id: $AWS_ACCESS_KEY_ID
+    secret_access_key: $AWS_SECRET_ACCESS_KEY
+    region: $AWS_DEFAULT_REGION
+    # Name of the S3 bucket to which your site should be uploaded.
+    bucket: $AWS_BUCKET
+    # Prevent Travis from deleting your built site so it can be uploaded.
+    skip_cleanup: true
+    # Path of the source directory containing your built site.
+    local_dir: deploy
+    # Path to a directory containing your built site.
+    upload-dir: deploy
+    # Set the Cache-Control header.
+    cache_control: "max-age=21600"
+  # Deploy doc
+  - provider: s3
+    on:
+      tags: true
+    # You can refer to environment variables from Travis repo settings!
+    access_key_id: $AWS_ACCESS_KEY_ID
+    secret_access_key: $AWS_SECRET_ACCESS_KEY
+    region: $AWS_DEFAULT_REGION
+    # Name of the S3 bucket to which your site should be uploaded.
+    bucket: com.diabeloop.yourloops.doc
+    # Prevent Travis from deleting your built site so it can be uploaded.
+    skip_cleanup: true
+    # Path of the source directory containing your built site.
+    local_dir: doc
+    # Path to a directory containing your built site.
+    upload-dir: openapi/gatekeeper
+    # Set the Cache-Control header.
+    cache_control: "max-age=21600"
 
 services:
   - docker
   - mongodb
 
 script:
-  - npm run lint
   - npm test
+  - npm run lint
+  - npm audit --registry=https://registry.npmjs.org --audit-level=moderate
   - ./artifact.sh

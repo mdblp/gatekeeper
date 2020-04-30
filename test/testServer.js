@@ -7,15 +7,18 @@
 
 
 var salinity = require('salinity');
-
+const chai = require('chai');
+const chaiHttp = require('chai-http');
 var expect = salinity.expect;
 var mockableObject = salinity.mockableObject;
 var sinon = salinity.sinon;
+chai.use(chaiHttp);
 
 describe('server.js', function(){
   var userApiClient = mockableObject.make('checkToken');
   var dataBroker = mockableObject.make('userInGroup', 'usersInGroup', 'groupsForUser', 'setPermissions');
-  var server = require('../lib/server.js')(userApiClient, dataBroker);
+  var env = {'version': '1.0.1'};
+  var server = require('../lib/server.js')(userApiClient, dataBroker,env);
 
   var token = 'tokenTextHere';
   var tokenGetter = function(cb){ return cb(null, token); };
@@ -41,6 +44,18 @@ describe('server.js', function(){
       expect(userApiClient.checkToken).to.have.been.calledWith(token, sinon.match.func);
     };
   }
+
+  describe('GET /status', function(){
+    it('returns "OK" and the correct version number', function(done) {
+      chai.request('localhost:12345').get('/status').end(function(err,res) {
+        expect(err).to.equal(null);
+        expect(res.status).to.equal(200);
+        expect(res.body.version).to.equal(env.version);
+        done();
+      });
+      
+    });
+  });
 
   describe('GET /access/groups/:userid', function(){
     it('allows a server to see any user info', function(done){
