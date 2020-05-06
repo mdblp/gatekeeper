@@ -1,8 +1,11 @@
+const pjson = require('./package.json');
+
+module.exports = 
 {
   "openapi": "3.0.0",
   "info": {
     "title": "Gatekeeper API",
-    "version": "0.2.1",
+    "version": pjson.version,
     "description": "Gatekeeper is the Authentication service for YourLoops",
     "license": {
       "name": "BSD-2-Clause",
@@ -14,4 +17,4 @@
       "email": "platforms@diabeloop.fr"
     }
   }
-}
+};
