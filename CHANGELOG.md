@@ -1,6 +1,10 @@
 # Gatekeeper
 Authorization client and server for tidepool
 
+## Unreleased
+### Engineering
+- Review the way the openapi doc build is triggered
+
 ## 0.2.2 - 2020-03-30
 ### Engineering
 - PT-996 Document API as openapi
