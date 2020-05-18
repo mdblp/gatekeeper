@@ -2,6 +2,8 @@
 Authorization client and server for tidepool
 
 ## Unreleased
+### Changed
+- PT-1277 Integrate Tidepool master for gatekeeper
 ### Engineering
 - Review the way the openapi doc build is triggered
 
