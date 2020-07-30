@@ -7,3 +7,4 @@ export PUBLISH_HOST=hakken
 export SERVICE_NAME=gatekeeper
 export USER_API_SERVICE="{\"type\":\"static\", \"hosts\":[{\"protocol\":\"http\", \"host\":\"localhost:9107\"}]}"
 export SERVER_SECRET='This needs to be the same secret everywhere. YaHut75NsK1f9UKUXuWqxNN0RUwHFBCy'
+export SKIP_HAKKEN="true"
