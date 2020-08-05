@@ -1,13 +1,14 @@
 # Gatekeeper
 Authorization client and server for tidepool
 
-## Unreleased
+## 0.3.0 - 2020-08-04
 ### Changed
 - PT-1277 Integrate Tidepool master for gatekeeper
 ### Fixed
 - PT-1326 Gatekeeper crashes on first query after MongoDb restart
 ### Engineering
 - Review the way the openapi doc build is triggered
+- PT-1448 Generate SOUP list
 
 ## 0.2.2 - 2020-03-30
 ### Engineering

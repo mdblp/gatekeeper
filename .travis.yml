@@ -6,12 +6,14 @@ node_js:
   - 10.15.3
 
 env:
-  jobs:
+  global:
     - BUILD_OPENAPI_DOC=true
+    - BUILD_SOUP=true
 
 install:
   - npm install -g npm@latest
   - npm install
+  - npm install --save-dev ci-toolbox@latest
 
 addons:
   apt:
@@ -54,10 +56,22 @@ deploy:
     # Prevent Travis from deleting your built site so it can be uploaded.
     skip_cleanup: true
     # Path of the source directory containing your built site.
-    local_dir: doc
+    local_dir: doc/openapi
     # Path to a directory containing your built site.
     upload-dir: openapi/gatekeeper
     # Set the Cache-Control header.
+    cache_control: "max-age=21600"
+  # Deploy SOUP list
+  - provider: s3
+    on:
+      tags: true
+    access_key_id: $AWS_ACCESS_KEY_ID
+    secret_access_key: $AWS_SECRET_ACCESS_KEY
+    region: $AWS_DEFAULT_REGION
+    bucket: com.diabeloop.yourloops.doc
+    skip_cleanup: true
+    local_dir: doc/soup
+    upload-dir: soup/gatekeeper
     cache_control: "max-age=21600"
 
 services:
