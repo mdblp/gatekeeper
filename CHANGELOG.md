@@ -1,10 +1,13 @@
 # Gatekeeper
 Authorization client and server for tidepool
 
+## Unreleased
+### Changed
+- PT-1436 Make service start without MongoDb available
+
 ## 0.3.0 - 2020-08-04
 ### Changed
 - PT-1277 Integrate Tidepool master for gatekeeper
-- PT-1436 Make service start without MongoDb available
 ### Fixed
 - PT-1326 Gatekeeper crashes on first query after MongoDb restart
 ### Engineering
