@@ -1,46 +1,20 @@
-### Stage 0 - Base image
-FROM node:10.15.3-alpine as base
-
-ARG npm_token
-ENV nexus_token=$npm_token
-WORKDIR /app
+### Stage 1 - Build
+FROM golang:1.12-alpine as build
+WORKDIR /go/src/github.com/mdblp/gatekeeper
+COPY . .
 RUN apk --no-cache update && \
     apk --no-cache upgrade && \
-    apk add --no-cache --virtual .build-dependencies python make g++ && \
-    mkdir -p node_modules && chown -R node:node .
+    apk --no-cache add git make tzdata ca-certificates && \
+    make clean && \
+    make build
 
-
-### Stage 1 - Create cached `node_modules`
-# Only rebuild layer if `package.json` has changed
-FROM base as dependencies
-COPY package.json .
-COPY package-lock.json .
-COPY .npmrc .npmrc
-RUN \
-  # Build and separate all dependancies required for production
-  npm install --production && cp -R node_modules production_node_modules \
-  # Build all modules, including `devDependancies`
-  && npm install
-
-
-### Stage 2 - Development root with Chromium installed for unit tests
-FROM base as development
-ENV NODE_ENV=development
-# Copy all `node_modules` dependencies
-COPY --chown=node:node --from=dependencies /app/node_modules ./node_modules
-# Copy source files
-COPY --chown=node:node . .
-USER node
-CMD ["npm", "start"]
-
-
-### Stage 3 - Serve production-ready release
-FROM base as production
-ENV NODE_ENV=production
-RUN apk del .build-dependencies
-# Copy only `node_modules` needed to run the server
-COPY --from=dependencies /app/production_node_modules ./node_modules
-# Copy source files
-COPY --chown=node:node . .
-USER node
-CMD ["npm", "start"]
+### Stage 2 - Serve production-ready release
+FROM alpine:3.12 as production
+RUN apk --no-cache update && \
+    apk --no-cache upgrade && \
+    apk --no-cache add tzdata ca-certificates && \
+    adduser -D gatekeeper
+WORKDIR /app
+COPY --from=build /go/src/github.com/mdblp/gatekeeper/gatekeeper /app
+USER gatekeeper
+ENTRYPOINT ["/app/gatekeeper"]
