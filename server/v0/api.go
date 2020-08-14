@@ -48,13 +48,13 @@ func (api *APIv0) Init(mux *mux.Router) {
 
 func (api *APIv0) status(w http.ResponseWriter, r *http.Request) {
 	type JSONStatus struct {
-		status string
+		Status string `json:"status"`
 	}
 
 	api.logger.Printf("GET %s\n", r.URL.String())
 
-	jStatus := &JSONStatus{
-		status: "OK",
+	jStatus := JSONStatus{
+		Status: "OK",
 	}
 	res, err := json.Marshal(jStatus)
 	if err != nil {
@@ -62,7 +62,7 @@ func (api *APIv0) status(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		return
 	}
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	w.Write(res)
 }
