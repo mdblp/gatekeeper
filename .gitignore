@@ -1,5 +1,6 @@
 logs
 *.log
-doc/openapi
+doc/*
 .vscode/launch.json
 gatekeeper
+dist

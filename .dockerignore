@@ -1,7 +1,10 @@
 .git
 .gitignore
-doc
+.dockerignore
+.artifactignore
 .travis.yml
+doc
+config
 CHANGELOG.md
 README.md
 Dockerfile

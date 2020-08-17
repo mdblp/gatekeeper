@@ -1,3 +1,5 @@
-.artifactignore
 .git
 .gitignore
+.dockerignore
+.artifactignore
+doc

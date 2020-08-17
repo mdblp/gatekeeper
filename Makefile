@@ -13,8 +13,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+GOPATH ?= ~/go
+GO111MODULE = on
+GOCC = go
+
+DEPLOY_DOC = docs/soup
+
+all: dist doc soup
+
+dist: build
+	mkdir dist
+	mv gatekeeper dist/
+	cp -a start.sh dist/
+
 build: clean
-	go build
+	GOPATH=$(GOPATH) $(GOCC) mod tidy
+	GOPATH=$(GOPATH) $(GOCC) build
+
+doc: $(GOPATH)/bin/swag
+	mkdir -p doc/openapi
+	$(GOPATH)/bin/swag --version
+	$(GOPATH)/bin/swag init --generalInfo gatekeeper.go --output doc/openapi
+
+soup:
+	mkdir -p doc/soup
+	go list -f '## {{printf "%s \n\t* description: \n\t* version: %s\n\t* webSite: https://%s\n\t* sources:" .Path .Version .Path}}' -m all >> doc/soup/soup.md
 
 clean:
 	rm -f gatekeeper
+	rm -rf dist
+	rm -rf doc
+	rm -rf soup/gatekeeper
+
+test:
+	GOPATH=$(GOPATH) $(GOCC) test

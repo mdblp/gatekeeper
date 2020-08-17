@@ -29,8 +29,9 @@ import (
 	"strconv"
 	"syscall"
 
-	mux "github.com/gorilla/mux"
 	v0 "github.com/mdblp/gatekeeper/server/v0"
+
+	mux "github.com/gorilla/mux"
 )
 
 // Config HTTP server configuration
@@ -44,6 +45,7 @@ type Config struct {
 	// See http.Transport
 	DisableCompression bool
 	MaxIdleConns       int
+	PortalURL          string
 }
 
 // Server needed infos
@@ -101,7 +103,7 @@ func (srv *Server) Start() error {
 	// } // srv.httpServer.Handler
 	// srv.mux = http.NewServeMux()
 	// srv.apiHandleV0(handler)
-	srv.logger.Printf("Starting the server")
+	srv.logger.Printf("Starting the server on %s", srv.httpServer.Addr)
 	srv.setRouter()
 
 	if srv.tls {
@@ -122,7 +124,7 @@ func (srv *Server) Stop() {
 func (srv *Server) setRouter() {
 	mux := mux.NewRouter()
 	srv.httpServer.Handler = mux
-	v0 := v0.New(srv.logger)
+	v0 := v0.New(srv.logger, srv.config.PortalURL)
 	v0.Init(mux)
 }
 

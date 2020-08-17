@@ -15,11 +15,26 @@
  * limitations under the License.
  */
 
+// @title Gatekeeper API
+// @version 1.0.0
+// @description The purpose of this API is to provide authorizations for end users and other tidepool Services
+// @license.name BSD 2-Clause "Simplified" License
+// @host localhost
+// @BasePath /access
+// @accept json
+// @produce json
+// @schemes https
+
+// @securityDefinitions.apikey TidepoolAuth
+// @in header
+// @name x-tidepool-session-token
+
 package main
 
 import (
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/mdblp/gatekeeper/server"
 )
@@ -29,6 +44,21 @@ func main() {
 	logger.Print("Starting service")
 
 	serverConfig := server.NewConfig()
+	serverConfig.PortalURL = os.Getenv("PORTAL_API_HOST")
+	if serverConfig.PortalURL == "" {
+		// Default value
+		serverConfig.PortalURL = "http://localhost:9507"
+	}
+
+	serverPort := os.Getenv("PORT")
+	if serverPort != "" {
+		if port, err := strconv.Atoi(serverPort); err == nil && port >= 80 && port < 65536 {
+			serverConfig.Port = port
+		} else {
+			logger.Fatalf("Invalid PORT value: %s", serverPort)
+		}
+	}
+
 	httpServer, err := server.NewServer(serverConfig, logger)
 	if err != nil {
 		logger.Fatalf("%v", err)
@@ -38,9 +68,6 @@ func main() {
 	go httpServer.WaitOSSignals(done)
 
 	httpServer.Start()
-	// if err != nil {
-	// 	logger.Fatalf("Failed to start the server: %v", err)
-	// }
 	<-done
 
 	logger.Print("Service stopped")
