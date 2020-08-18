@@ -27,8 +27,9 @@ dist: build
 	cp -a start.sh dist/
 
 build: clean
-	GOPATH=$(GOPATH) $(GOCC) mod tidy
-	GOPATH=$(GOPATH) $(GOCC) build
+	GOPATH=$(GOPATH) GO111MODULE=$(GO111MODULE) $(GOCC) mod tidy
+	GOPATH=$(GOPATH) GO111MODULE=$(GO111MODULE) $(GOCC) build
+	chmod 755 gatekeeper
 
 doc: $(GOPATH)/bin/swag
 	mkdir -p doc/openapi

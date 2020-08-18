@@ -21,17 +21,20 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
 
-	v0 "github.com/mdblp/gatekeeper/server/v0"
-
 	mux "github.com/gorilla/mux"
+	"github.com/mdblp/gatekeeper/server/common"
+	v0 "github.com/mdblp/gatekeeper/server/v0"
+	v1 "github.com/mdblp/gatekeeper/server/v1"
 )
 
 // Config HTTP server configuration
@@ -45,7 +48,8 @@ type Config struct {
 	// See http.Transport
 	DisableCompression bool
 	MaxIdleConns       int
-	PortalURL          string
+	PortalURL          *url.URL
+	ShorelineSecret    string
 }
 
 // Server needed infos
@@ -98,11 +102,6 @@ func NewServer(config *Config, logger *log.Logger) (*Server, error) {
 
 // Start the http(s) server
 func (srv *Server) Start() error {
-	// handler := &apiHandler{
-	// 	logger: srv.logger,
-	// } // srv.httpServer.Handler
-	// srv.mux = http.NewServeMux()
-	// srv.apiHandleV0(handler)
 	srv.logger.Printf("Starting the server on %s", srv.httpServer.Addr)
 	srv.setRouter()
 
@@ -122,10 +121,26 @@ func (srv *Server) Stop() {
 }
 
 func (srv *Server) setRouter() {
-	mux := mux.NewRouter()
-	srv.httpServer.Handler = mux
-	v0 := v0.New(srv.logger, srv.config.PortalURL)
-	v0.Init(mux)
+	router := mux.NewRouter()
+	srv.httpServer.Handler = router
+	base := &common.Base{
+		Logger:          srv.logger,
+		PortalURL:       srv.config.PortalURL,
+		ShorelineSecret: srv.config.ShorelineSecret,
+	}
+
+	apiStatus := base.RequestLogger(srv.status)
+	router.HandleFunc("/status", apiStatus)
+
+	apiV0 := v0.New(base)
+	apiV1 := v1.New(base)
+
+	apiV1.Init(router)
+	apiV0.Init(router, apiStatus)
+
+	mux.NewRouter().MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
+		return true
+	}).HandlerFunc(srv.notFound)
 }
 
 // WaitOSSignals to stop the server
@@ -139,4 +154,40 @@ func (srv *Server) WaitOSSignals(done chan bool) {
 		srv.Stop()
 		done <- true
 	}
+}
+
+// @Summary Get the api status
+// @Description Get the api status
+// @ID gatekeeper-get-status
+// @Produce json
+// @Success 200 {object} common.APIStatus
+// @Failure 500 {object} common.APIStatus
+// @Router /status [get]
+func (srv *Server) status(w http.ResponseWriter, r *http.Request) int {
+	w.Header().Add("Content-Type", "application/json; charset=utf-8")
+
+	srv.logger.Printf("GET %s\n", r.URL.String())
+
+	jStatus := common.APIStatus{
+		Status:  "OK",
+		Version: "0.0.0",
+	}
+	res, err := json.Marshal(jStatus)
+	if err != nil {
+		srv.logger.Printf("Failed to create JSON for %s: %v", r.URL.String(), err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("{\"status\": \"KO\", \"version\": \"0.0.0\"}"))
+		return http.StatusInternalServerError
+	}
+
+	w.WriteHeader(200)
+	w.Write(res)
+	return http.StatusOK
+}
+
+func (srv *Server) notFound(w http.ResponseWriter, r *http.Request) {
+	srv.logger.Printf("Invalid route %s %s", r.Method, r.URL.RequestURI())
+	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusNotFound)
+	w.Write([]byte("Not Found"))
 }

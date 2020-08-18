@@ -20,7 +20,7 @@
 // @description The purpose of this API is to provide authorizations for end users and other tidepool Services
 // @license.name BSD 2-Clause "Simplified" License
 // @host localhost
-// @BasePath /access
+// @BasePath /
 // @accept json
 // @produce json
 // @schemes https
@@ -33,22 +33,39 @@ package main
 
 import (
 	"log"
+	"net/url"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/mdblp/gatekeeper/server"
 )
 
+const (
+	defaultPortalURL       = "http://localhost:9507"
+	defaultShorelineSecret = "This is a local API secret for everyone. BsscSHqSHiwrBMJsEGqbvXiuIUPAjQXU"
+)
+
 func main() {
+	var err error
 	logger := log.New(os.Stdout, "gatekeeper:", log.LstdFlags|log.LUTC|log.Lshortfile)
-	logger.Print("Starting service")
+	logger.Printf("Starting service: %v\n", os.Environ())
 
 	serverConfig := server.NewConfig()
-	serverConfig.PortalURL = os.Getenv("PORTAL_API_HOST")
-	if serverConfig.PortalURL == "" {
-		// Default value
-		serverConfig.PortalURL = "http://localhost:9507"
+	serverConfig.ShorelineSecret = os.Getenv("SHORELINE_SECRET")
+	if serverConfig.ShorelineSecret == "" {
+		serverConfig.ShorelineSecret = defaultShorelineSecret
 	}
+	portalURL := os.Getenv("PORTAL_API_HOST")
+	if !strings.HasPrefix(portalURL, "http") {
+		// Default value
+		portalURL = defaultPortalURL
+	}
+	serverConfig.PortalURL, err = url.Parse(portalURL)
+	if err != nil {
+		logger.Fatalf("Invalid portal-api host")
+	}
+	logger.Printf("Using portal-api url: %s\n", serverConfig.PortalURL.String())
 
 	serverPort := os.Getenv("PORT")
 	if serverPort != "" {

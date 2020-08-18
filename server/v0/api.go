@@ -21,61 +21,41 @@ package v0
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"log"
 	"net/http"
-	"net/url"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/mdblp/gatekeeper/portal"
+	"github.com/mdblp/gatekeeper/server/common"
 )
 
 type (
-	apiStatus struct {
-		Status  string `json:"status"`
-		Version string `json:"version"`
-	}
-
-	clinicWhomHaveAccessTo struct {
-		Team    portal.Team     `json:"team"`
-		Members []portal.Member `json:"members"`
-	}
-
 	permission       map[string]interface{}
 	permissions      map[string]permission
 	usersPermissions map[string]permissions
+
+	// API data
+	API struct {
+		b *common.Base
+	}
 )
 
-// APIv0 data
-type APIv0 struct {
-	logger    *log.Logger
-	portalURL *url.URL
-}
-
-// XTidepoolSessionToken in the HTTP header
-const XTidepoolSessionToken = "x-tidepool-session-token"
-
-// XTidepoolTraceSession in the HTTP header
-const XTidepoolTraceSession = "x-tidepool-trace-session"
-
-// New Create a new APIv0
-func New(logger *log.Logger, portalAPIHost string) *APIv0 {
-	portalURL, err := url.Parse(portalAPIHost)
-	if err != nil {
-		logger.Fatalf("Invalid portal-api host")
-	}
-	return &APIv0{
-		logger:    logger,
-		portalURL: portalURL,
+// New Create a new API
+func New(base *common.Base) *API {
+	return &API{
+		b: base,
 	}
 }
 
 // Init the API v0 HTTP handlers
-func (api *APIv0) Init(mux *mux.Router) {
-	mux.HandleFunc("/access/status", api.status).Methods("GET")
+func (api *API) Init(mux *mux.Router, apiStatus func(http.ResponseWriter, *http.Request)) {
+	mux.HandleFunc("/access/status", api.status(apiStatus)).Methods(http.MethodGet)
 	// List of users sharing data with one subject
-	mux.HandleFunc("/access/groups/{userID}", api.clinicToWhomIHaveAccessTo).Methods("GET")
+	mux.HandleFunc("/access/groups/{userID}", api.b.RequestLogger(api.clinicToWhomIHaveAccessTo)).Methods(http.MethodGet)
+	mux.HandleFunc("/access/{userID}", api.b.RequestLogger(api.patientShares)).Methods(http.MethodGet)
+	mux.HandleFunc("/access/{groupID}/{userID}", api.b.RequestLogger(api.userInGroupOf)).Methods(http.MethodGet)
+	mux.HandleFunc("/access/{groupID}/{userID}", api.b.RequestLogger(api.invalidRoute)).Methods(http.MethodPost)
+	// /access/:userid/:granteeid
+
 	// List of users one subject is sharing data with
 	// "/access/{userid}" "GET"
 	// Check whether one subject is sharing data with one other user
@@ -86,34 +66,24 @@ func (api *APIv0) Init(mux *mux.Router) {
 
 // @Summary Get the api status
 // @Description Get the api status
-// @ID gatekeeper-api-v0-getstatus
+// @ID gatekeeper-get-access-status
 // @Produce json
-// @Success 200 {object} apiStatus
-// @Failure 500 {object} apiStatus
-// @Router /status [get]
-func (api *APIv0) status(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "application/json; charset=utf-8")
+// @Success 200 {object} common.APIStatus
+// @Failure 500 {object} common.APIStatus
+// @Router /access/status [get]
+func (api *API) status(apiStatus func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return apiStatus
+}
 
-	api.logger.Printf("GET %s\n", r.URL.String())
-
-	jStatus := apiStatus{
-		Status:  "OK",
-		Version: "0.0.0",
-	}
-	res, err := json.Marshal(jStatus)
-	if err != nil {
-		api.logger.Printf("Failed to create JSON for %s: %v", r.URL.String(), err)
-		w.WriteHeader(500)
-		w.Write([]byte("{\"status\": \"KO\", \"version\": \"0.0.0\"}"))
-		return
-	}
-
-	w.WriteHeader(200)
-	w.Write(res)
+// FIXME how to match all other routes?
+func (api *API) invalidRoute(w http.ResponseWriter, r *http.Request) int {
+	api.b.Logger.Printf("Invalid route %s %s", r.Method, r.URL.RequestURI())
+	w.WriteHeader(http.StatusNotImplemented)
+	return http.StatusNotImplemented
 }
 
 // @Summary List of users sharing data with one subject
-// @ID gatekeeper-api-v0-clinic-access-to
+// @ID gatekeeper-get-access-group-userid
 // @Security TidepoolAuth
 // @Produce json
 // @Success 200 {object} usersPermissions
@@ -122,69 +92,14 @@ func (api *APIv0) status(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} Internal Server Error
 // @Failure 503 {string} Service Unavailable
 // @Router /access/groups/{userID} [get]
-func (api *APIv0) clinicToWhomIHaveAccessTo(w http.ResponseWriter, r *http.Request) {
-	start := time.Now().UTC()
-
+func (api *API) clinicToWhomIHaveAccessTo(w http.ResponseWriter, r *http.Request) int {
 	vars := mux.Vars(r) // Decode route parameter
 	userID := vars["userID"]
-	token := r.Header.Get(XTidepoolSessionToken)
-	trace := r.Header.Get(XTidepoolTraceSession)
 
-	if token == "" {
-		apiFailure := portal.APIFailure{
-			Message: "Missing token",
-		}
-		res, err := json.Marshal(apiFailure)
-		if err != nil {
-			w.Header().Add("Content-Type", "application/json; charset=utf-8")
-			w.Write(res)
-		}
-		w.WriteHeader(403)
-		return
-	}
-
-	portalURL := api.portalURL.String() + "/teams/v1/members/clinic-my-teams"
-	request, err := http.NewRequest("GET", portalURL, nil)
+	portalClient := portal.New(api.b.Logger, api.b.PortalURL, api.b.ShorelineSecret)
+	results, status, err := portalClient.ClinicalShares(w, r, userID)
 	if err != nil {
-		api.logger.Printf("Failed to create a new GET HTTP request: %v", err)
-		w.WriteHeader(500)
-		w.Write([]byte("Internal Server Error"))
-		return
-	}
-
-	request.Header.Add(XTidepoolSessionToken, token)
-	if trace != "" {
-		// Forward the trace session id
-		request.Header.Add(XTidepoolTraceSession, trace)
-	}
-
-	c := http.Client{}
-	response, err := c.Do(request)
-	if err != nil {
-		api.logger.Printf("Failed to send the HTTP request: %v", err)
-		w.WriteHeader(503)
-		w.Write([]byte("Service Unavailable"))
-		return
-	}
-
-	defer response.Body.Close()
-
-	if response.StatusCode != 200 {
-		w.WriteHeader(response.StatusCode)
-		body, err := ioutil.ReadAll(response.Body)
-		if err == nil {
-			w.Header().Add("Content-Type", "application/json; charset=utf-8")
-			w.Write(body)
-		}
-		return
-	}
-
-	var results []clinicWhomHaveAccessTo
-	if err = json.NewDecoder(response.Body).Decode(&results); err != nil {
-		api.logger.Printf("Failed to parse portal-api response to JSON: %v", err)
-		w.WriteHeader(500)
-		w.Write([]byte("Internal Server Error"))
-		return
+		return status
 	}
 
 	perms := make(usersPermissions)
@@ -205,16 +120,107 @@ func (api *APIv0) clinicToWhomIHaveAccessTo(w http.ResponseWriter, r *http.Reque
 
 	jsonResponse, err := json.Marshal(perms)
 	if err != nil {
-		api.logger.Printf("Failed to encode response to JSON: %v", err)
-		w.WriteHeader(500)
+		api.b.Logger.Printf("Failed to encode response to JSON: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Internal Server Error"))
-		return
+		return http.StatusInternalServerError
 	}
 
 	w.Header().Add("Content-Type", "application/json; charset=utf-8")
 	w.Write(jsonResponse)
+	return http.StatusOK
+}
 
-	end := time.Now().UTC()
-	dur := end.Sub(start).Milliseconds()
-	api.logger.Printf("%s - %s %s HTTP/%d.%d 200 - %d ms", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.ProtoMajor, r.ProtoMinor, dur)
+// @Summary Check whether one subject is sharing data with one other user
+// @ID gatekeeper-api-v0-clinic-access-to-with-ids
+// @Security TidepoolAuth
+// @Produce json
+// @Success 200 {object} usersPermissions
+// @Failure 400 {object} portal.APIFailure
+// @Failure 403 {object} portal.APIFailure
+// @Failure 500 {string} Internal Server Error
+// @Failure 503 {string} Service Unavailable
+// @Router /access/{groupID}/{userID} [get]
+func (api *API) userInGroupOf(w http.ResponseWriter, r *http.Request) int {
+	var status int
+	vars := mux.Vars(r) // Decode route parameter
+	groupID := vars["groupID"]
+	userID := vars["userID"]
+	// api.b.Logger.Printf("TOTO userInGroupOf: groupID{%s} userID{%s}", vars["groupID"], vars["userID"])
+
+	portalClient := portal.New(api.b.Logger, api.b.PortalURL, api.b.ShorelineSecret)
+	results, status, err := portalClient.ClinicalShares(w, r, userID)
+	if err != nil {
+		return status
+	}
+
+	perm := permissions{}
+	found := false
+	for _, result := range results {
+		for _, member := range result.Members {
+			if member.UserID == groupID {
+				perm = permissions{
+					"root": permission{},
+					"vew":  permission{},
+				}
+				found = true
+				break
+			}
+		}
+		if found {
+			break
+		}
+	}
+
+	jsonResponse, err := json.Marshal(perm)
+	if err != nil {
+		api.b.Logger.Printf("Failed to encode response to JSON: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal Server Error"))
+		return http.StatusInternalServerError
+	}
+
+	w.Header().Add("Content-Type", "application/json; charset=utf-8")
+	w.Write(jsonResponse)
+	return http.StatusOK
+}
+
+func (api *API) patientShares(w http.ResponseWriter, r *http.Request) int {
+	var status int
+	vars := mux.Vars(r) // Decode route parameter
+	userID := vars["userID"]
+
+	portalClient := portal.New(api.b.Logger, api.b.PortalURL, api.b.ShorelineSecret)
+	results, status, err := portalClient.ClinicalShares(w, r, userID)
+	if err != nil {
+		return status
+	}
+
+	perms := make(usersPermissions)
+	perms[userID] = permissions{
+		"root": permission{},
+	}
+	for _, result := range results {
+		// teamID := result.Team.ID
+		for _, member := range result.Members {
+			if _, exists := perms[member.UserID]; exists == false {
+				perms[member.UserID] = permissions{
+					"node": permission{},
+					"vew":  permission{},
+				}
+			}
+		}
+	}
+
+	jsonResponse, err := json.Marshal(perms)
+	if err != nil {
+		api.b.Logger.Printf("Failed to encode response to JSON: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal Server Error"))
+		return http.StatusInternalServerError
+	}
+
+	w.Header().Add("Content-Type", "application/json; charset=utf-8")
+	w.Write(jsonResponse)
+	return http.StatusOK
 }
