@@ -103,7 +103,9 @@ func NewServer(config *Config, logger *log.Logger) (*Server, error) {
 // Start the http(s) server
 func (srv *Server) Start() error {
 	srv.logger.Printf("Starting the server on %s", srv.httpServer.Addr)
-	srv.setRouter()
+	if !srv.setRouter() {
+		return fmt.Errorf("Failed to init routes")
+	}
 
 	if srv.tls {
 		return srv.httpServer.ListenAndServeTLS(*srv.config.CertFile, *srv.config.KeyFile)
@@ -120,7 +122,7 @@ func (srv *Server) Stop() {
 	}
 }
 
-func (srv *Server) setRouter() {
+func (srv *Server) setRouter() bool {
 	router := mux.NewRouter()
 	srv.httpServer.Handler = router
 	base := &common.Base{
@@ -135,12 +137,16 @@ func (srv *Server) setRouter() {
 	apiV0 := v0.New(base)
 	apiV1 := v1.New(base)
 
-	apiV1.Init(router)
+	if !apiV1.Init(router) {
+		return false
+	}
 	apiV0.Init(router, apiStatus)
 
 	mux.NewRouter().MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
 		return true
 	}).HandlerFunc(srv.notFound)
+
+	return true
 }
 
 // WaitOSSignals to stop the server

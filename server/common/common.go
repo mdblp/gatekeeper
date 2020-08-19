@@ -39,10 +39,10 @@ type (
 		Version string `json:"version"`
 	}
 
-	// API common interface
-	API interface {
-		Init(b *Base)
-	}
+	// // API common interface
+	// API interface {
+	// 	Init(b *Base) bool
+	// }
 )
 
 // RequestLogger middleware (finalware?) to log received requests

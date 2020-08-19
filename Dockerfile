@@ -1,10 +1,9 @@
 ### Stage 1 - Build
 FROM golang:1.14-alpine as build
-WORKDIR /go/src/github.com/mdblp/gatekeeper
 RUN apk --no-cache update && \
     apk --no-cache upgrade && \
     apk --no-cache add git make tzdata ca-certificates
-
+WORKDIR /go/src/github.com/mdblp/gatekeeper
 COPY . .
 RUN make build
 

@@ -3,7 +3,6 @@ package portal
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -42,26 +41,16 @@ func New(logger *log.Logger, portalURL *url.URL, shorelineSecret string) *Client
 }
 
 // ClinicalShares do GET /teams/v1/members/clinician-shares
-func (c *Client) ClinicalShares(w http.ResponseWriter, r *http.Request, userID string) (WhoHaveAccessTo, int, error) {
+func (c *Client) ClinicalShares(r *http.Request, userID string) (WhoHaveAccessTo, int, error) {
 	token := r.Header.Get(XTidepoolSessionToken)
 	trace := r.Header.Get(XTidepoolTraceSession)
 
 	if token == "" {
-		apiFailure := APIFailure{
-			Message: "Missing token",
-		}
-		res, err := json.Marshal(apiFailure)
-		w.WriteHeader(http.StatusForbidden)
-		if err != nil {
-			w.Header().Add("Content-Type", "application/json; charset=utf-8")
-			w.Write(res)
-		}
-		return nil, http.StatusForbidden, err
+		return nil, http.StatusForbidden, nil
 	}
 
 	claims, err := shoreline.UnpackAndVerifyToken(token, c.shorelineSecret)
 	if err != nil {
-		w.WriteHeader(http.StatusForbidden)
 		return nil, http.StatusForbidden, err
 	}
 
@@ -72,9 +61,6 @@ func (c *Client) ClinicalShares(w http.ResponseWriter, r *http.Request, userID s
 
 	request, err := http.NewRequest(http.MethodGet, portalURL, nil)
 	if err != nil {
-		c.logger.Printf("Failed to create a new GET HTTP request: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Internal Server Error"))
 		return nil, http.StatusInternalServerError, err
 	}
 
@@ -87,30 +73,18 @@ func (c *Client) ClinicalShares(w http.ResponseWriter, r *http.Request, userID s
 	hc := http.Client{}
 	response, err := hc.Do(request)
 	if err != nil {
-		c.logger.Printf("Failed to send the HTTP request: %v", err)
-		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write([]byte("Service Unavailable"))
 		return nil, http.StatusServiceUnavailable, err
 	}
 
 	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
-		w.WriteHeader(response.StatusCode)
-		body, err := ioutil.ReadAll(response.Body)
-		if err == nil {
-			w.Header().Add("Content-Type", "application/json; charset=utf-8")
-			w.Write(body)
-		}
 		return nil, response.StatusCode, fmt.Errorf("%s %s - %d", request.Method, request.URL.String(), response.StatusCode)
 	}
 	c.logger.Printf("%s %s - %d", request.Method, request.URL.String(), response.StatusCode)
 
 	var results WhoHaveAccessTo
 	if err = json.NewDecoder(response.Body).Decode(&results); err != nil {
-		c.logger.Printf("Failed to parse portal-api response to JSON: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Internal Server Error"))
 		return nil, http.StatusInternalServerError, err
 	}
 
@@ -118,26 +92,16 @@ func (c *Client) ClinicalShares(w http.ResponseWriter, r *http.Request, userID s
 }
 
 // PatientShares return whos a patient is sharing to
-func (c *Client) PatientShares(w http.ResponseWriter, r *http.Request, userID string) (WhoHaveAccessTo, int, error) {
+func (c *Client) PatientShares(r *http.Request, userID string) (WhoHaveAccessTo, int, error) {
 	token := r.Header.Get(XTidepoolSessionToken)
 	trace := r.Header.Get(XTidepoolTraceSession)
 
 	if token == "" {
-		apiFailure := APIFailure{
-			Message: "Missing token",
-		}
-		res, err := json.Marshal(apiFailure)
-		w.WriteHeader(http.StatusForbidden)
-		if err != nil {
-			w.Header().Add("Content-Type", "application/json; charset=utf-8")
-			w.Write(res)
-		}
-		return nil, http.StatusForbidden, err
+		return nil, http.StatusForbidden, nil
 	}
 
 	claims, err := shoreline.UnpackAndVerifyToken(token, c.shorelineSecret)
 	if err != nil {
-		w.WriteHeader(http.StatusForbidden)
 		return nil, http.StatusForbidden, err
 	}
 
@@ -150,9 +114,6 @@ func (c *Client) PatientShares(w http.ResponseWriter, r *http.Request, userID st
 
 	request, err := http.NewRequest(http.MethodGet, portalURL, nil)
 	if err != nil {
-		c.logger.Printf("Failed to create a new GET HTTP request: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Internal Server Error"))
 		return nil, http.StatusForbidden, err
 	}
 
@@ -165,21 +126,12 @@ func (c *Client) PatientShares(w http.ResponseWriter, r *http.Request, userID st
 	hc := http.Client{}
 	response, err := hc.Do(request)
 	if err != nil {
-		c.logger.Printf("Failed to send the HTTP request: %v", err)
-		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write([]byte("Service Unavailable"))
 		return nil, http.StatusServiceUnavailable, err
 	}
 
 	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
-		w.WriteHeader(response.StatusCode)
-		body, err := ioutil.ReadAll(response.Body)
-		if err == nil {
-			w.Header().Add("Content-Type", "application/json; charset=utf-8")
-			w.Write(body)
-		}
 		return nil, response.StatusCode, fmt.Errorf("%s %s - %d", request.Method, request.URL.String(), response.StatusCode)
 	}
 
@@ -187,9 +139,6 @@ func (c *Client) PatientShares(w http.ResponseWriter, r *http.Request, userID st
 
 	var results WhoHaveAccessTo
 	if err = json.NewDecoder(response.Body).Decode(&results); err != nil {
-		c.logger.Printf("Failed to parse portal-api response to JSON: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Internal Server Error"))
 		return nil, http.StatusInternalServerError, err
 	}
 

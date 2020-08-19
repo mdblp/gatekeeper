@@ -84,7 +84,10 @@ func main() {
 	done := make(chan bool)
 	go httpServer.WaitOSSignals(done)
 
-	httpServer.Start()
+	err = httpServer.Start()
+	if err != nil {
+		logger.Fatal(err)
+	}
 	<-done
 
 	logger.Print("Service stopped")

@@ -96,26 +96,27 @@ func (api *API) clinicToWhomIHaveAccessTo(w http.ResponseWriter, r *http.Request
 	vars := mux.Vars(r) // Decode route parameter
 	userID := vars["userID"]
 
-	portalClient := portal.New(api.b.Logger, api.b.PortalURL, api.b.ShorelineSecret)
-	results, status, err := portalClient.ClinicalShares(w, r, userID)
-	if err != nil {
-		return status
-	}
-
 	perms := make(usersPermissions)
 	perms[userID] = permissions{
 		"root": permission{},
 	}
-	for _, result := range results {
-		// teamID := result.Team.ID
-		for _, member := range result.Members {
-			if _, exists := perms[member.UserID]; exists == false {
-				perms[member.UserID] = permissions{
-					"node": permission{},
-					"vew":  permission{},
+
+	portalClient := portal.New(api.b.Logger, api.b.PortalURL, api.b.ShorelineSecret)
+	results, status, err := portalClient.ClinicalShares(r, userID)
+	if status == http.StatusOK {
+		for _, result := range results {
+			// teamID := result.Team.ID
+			for _, member := range result.Members {
+				if _, exists := perms[member.UserID]; exists == false {
+					perms[member.UserID] = permissions{
+						"node": permission{},
+						"vew":  permission{},
+					}
 				}
 			}
 		}
+	} else if err != nil {
+		api.b.Logger.Printf("portal-api request failed: %s", err)
 	}
 
 	jsonResponse, err := json.Marshal(perms)
@@ -142,33 +143,41 @@ func (api *API) clinicToWhomIHaveAccessTo(w http.ResponseWriter, r *http.Request
 // @Failure 503 {string} Service Unavailable
 // @Router /access/{groupID}/{userID} [get]
 func (api *API) userInGroupOf(w http.ResponseWriter, r *http.Request) int {
-	var status int
 	vars := mux.Vars(r) // Decode route parameter
 	groupID := vars["groupID"]
 	userID := vars["userID"]
-	// api.b.Logger.Printf("TOTO userInGroupOf: groupID{%s} userID{%s}", vars["groupID"], vars["userID"])
-
-	portalClient := portal.New(api.b.Logger, api.b.PortalURL, api.b.ShorelineSecret)
-	results, status, err := portalClient.ClinicalShares(w, r, userID)
-	if err != nil {
-		return status
-	}
-
 	perm := permissions{}
-	found := false
-	for _, result := range results {
-		for _, member := range result.Members {
-			if member.UserID == groupID {
-				perm = permissions{
-					"root": permission{},
-					"vew":  permission{},
+
+	if groupID == userID {
+		perm = permissions{
+			"root": permission{},
+			"vew":  permission{},
+		}
+	} else {
+		portalClient := portal.New(api.b.Logger, api.b.PortalURL, api.b.ShorelineSecret)
+		results, status, err := portalClient.ClinicalShares(r, userID)
+		if status != http.StatusOK {
+			if err != nil {
+				api.b.Logger.Printf("portal-api request failed: %s", err)
+			}
+			return status
+		}
+
+		found := false
+		for _, result := range results {
+			for _, member := range result.Members {
+				if member.UserID == groupID {
+					perm = permissions{
+						"root": permission{},
+						"vew":  permission{},
+					}
+					found = true
+					break
 				}
-				found = true
+			}
+			if found {
 				break
 			}
-		}
-		if found {
-			break
 		}
 	}
 
@@ -190,26 +199,38 @@ func (api *API) patientShares(w http.ResponseWriter, r *http.Request) int {
 	vars := mux.Vars(r) // Decode route parameter
 	userID := vars["userID"]
 
-	portalClient := portal.New(api.b.Logger, api.b.PortalURL, api.b.ShorelineSecret)
-	results, status, err := portalClient.ClinicalShares(w, r, userID)
-	if err != nil {
-		return status
-	}
-
 	perms := make(usersPermissions)
 	perms[userID] = permissions{
 		"root": permission{},
 	}
-	for _, result := range results {
-		// teamID := result.Team.ID
-		for _, member := range result.Members {
-			if _, exists := perms[member.UserID]; exists == false {
-				perms[member.UserID] = permissions{
-					"node": permission{},
-					"vew":  permission{},
+
+	updatePerms := func(results portal.WhoHaveAccessTo) {
+		for _, result := range results {
+			for _, member := range result.Members {
+				if _, exists := perms[member.UserID]; exists == false {
+					perms[member.UserID] = permissions{
+						"node": permission{},
+						"vew":  permission{},
+					}
 				}
 			}
 		}
+	}
+
+	portalClient := portal.New(api.b.Logger, api.b.PortalURL, api.b.ShorelineSecret)
+
+	results, status, err := portalClient.ClinicalShares(r, userID)
+	if status == http.StatusOK {
+		updatePerms(results)
+	} else if err != nil {
+		api.b.Logger.Printf("portal-api request failed: %s", err)
+	}
+
+	results, status, err = portalClient.PatientShares(r, userID)
+	if status == http.StatusOK {
+		updatePerms(results)
+	} else if err != nil {
+		api.b.Logger.Printf("portal-api request failed: %s", err)
 	}
 
 	jsonResponse, err := json.Marshal(perms)
