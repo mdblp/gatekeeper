@@ -125,7 +125,7 @@ func (a *API) initRego() bool {
 	return true
 }
 
-func (a *API) canCreateTeam(w http.ResponseWriter, r *http.Request) int {
+func (a *API) canCreateTeam(w http.ResponseWriter, r *http.Request) {
 	type payloadType struct {
 		UserID    string   `json:"userId,omitempty"`
 		UserRoles []string `json:"userRoles,omitempty"`
@@ -136,7 +136,7 @@ func (a *API) canCreateTeam(w http.ResponseWriter, r *http.Request) int {
 	request := r.Header.Get(xRequestToken)
 	if request == "" {
 		w.WriteHeader(http.StatusForbidden)
-		return http.StatusForbidden
+		return
 	}
 
 	keyFunc := func(t *jwt.Token) (interface{}, error) {
@@ -146,21 +146,21 @@ func (a *API) canCreateTeam(w http.ResponseWriter, r *http.Request) int {
 	jwtToken, err := jwt.ParseWithClaims(request, &payloadType{}, keyFunc)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		return http.StatusBadRequest
+		return
 	}
 	if !jwtToken.Valid {
 		w.WriteHeader(http.StatusBadRequest)
-		return http.StatusBadRequest
+		return
 	}
 	if jwtToken.Method.Alg() != tokenSignMethod {
 		w.WriteHeader(http.StatusForbidden)
-		return http.StatusForbidden
+		return
 	}
 
 	payload := jwtToken.Claims.(*payloadType)
 	if payload.Issuer != "portal-api" {
 		w.WriteHeader(http.StatusBadRequest)
-		return http.StatusBadRequest
+		return
 	}
 	a.b.Logger.Printf("Payload: %v", payload)
 
@@ -169,28 +169,26 @@ func (a *API) canCreateTeam(w http.ResponseWriter, r *http.Request) int {
 	if err != nil {
 		a.b.Logger.Printf("Failed eval query: %s", err)
 		w.WriteHeader(http.StatusForbidden)
-		return http.StatusForbidden
+		return
 	}
 	if len(results) == 0 {
 		a.b.Logger.Printf("Result is empty")
 		w.WriteHeader(http.StatusForbidden)
-		return http.StatusForbidden
+		return
 	}
 	allow, ok := results[0].Bindings["allow"].(bool)
 	if !ok {
 		a.b.Logger.Printf("Result allow not found")
 		w.WriteHeader(http.StatusForbidden)
-		return http.StatusForbidden
+		return
 	}
 	if !allow {
 		a.b.Logger.Printf("Not authorized")
 		w.WriteHeader(http.StatusUnauthorized)
-		return http.StatusUnauthorized
+		return
 	}
-
-	return http.StatusOK
 }
 
-func (a *API) canUpdateTeam(w http.ResponseWriter, r *http.Request) int {
-	return http.StatusOK
+func (a *API) canUpdateTeam(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
 }

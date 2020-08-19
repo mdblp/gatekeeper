@@ -76,10 +76,9 @@ func (api *API) status(apiStatus func(http.ResponseWriter, *http.Request)) func(
 }
 
 // FIXME how to match all other routes?
-func (api *API) invalidRoute(w http.ResponseWriter, r *http.Request) int {
+func (api *API) invalidRoute(w http.ResponseWriter, r *http.Request) {
 	api.b.Logger.Printf("Invalid route %s %s", r.Method, r.URL.RequestURI())
 	w.WriteHeader(http.StatusNotImplemented)
-	return http.StatusNotImplemented
 }
 
 // @Summary List of users sharing data with one subject
@@ -92,7 +91,7 @@ func (api *API) invalidRoute(w http.ResponseWriter, r *http.Request) int {
 // @Failure 500 {string} Internal Server Error
 // @Failure 503 {string} Service Unavailable
 // @Router /access/groups/{userID} [get]
-func (api *API) clinicToWhomIHaveAccessTo(w http.ResponseWriter, r *http.Request) int {
+func (api *API) clinicToWhomIHaveAccessTo(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r) // Decode route parameter
 	userID := vars["userID"]
 
@@ -124,12 +123,11 @@ func (api *API) clinicToWhomIHaveAccessTo(w http.ResponseWriter, r *http.Request
 		api.b.Logger.Printf("Failed to encode response to JSON: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Internal Server Error"))
-		return http.StatusInternalServerError
+		return
 	}
 
 	w.Header().Add("Content-Type", "application/json; charset=utf-8")
 	w.Write(jsonResponse)
-	return http.StatusOK
 }
 
 // @Summary Check whether one subject is sharing data with one other user
@@ -142,7 +140,7 @@ func (api *API) clinicToWhomIHaveAccessTo(w http.ResponseWriter, r *http.Request
 // @Failure 500 {string} Internal Server Error
 // @Failure 503 {string} Service Unavailable
 // @Router /access/{groupID}/{userID} [get]
-func (api *API) userInGroupOf(w http.ResponseWriter, r *http.Request) int {
+func (api *API) userInGroupOf(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r) // Decode route parameter
 	groupID := vars["groupID"]
 	userID := vars["userID"]
@@ -160,7 +158,8 @@ func (api *API) userInGroupOf(w http.ResponseWriter, r *http.Request) int {
 			if err != nil {
 				api.b.Logger.Printf("portal-api request failed: %s", err)
 			}
-			return status
+			w.WriteHeader(status)
+			return
 		}
 
 		found := false
@@ -186,15 +185,14 @@ func (api *API) userInGroupOf(w http.ResponseWriter, r *http.Request) int {
 		api.b.Logger.Printf("Failed to encode response to JSON: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Internal Server Error"))
-		return http.StatusInternalServerError
+		return
 	}
 
 	w.Header().Add("Content-Type", "application/json; charset=utf-8")
 	w.Write(jsonResponse)
-	return http.StatusOK
 }
 
-func (api *API) patientShares(w http.ResponseWriter, r *http.Request) int {
+func (api *API) patientShares(w http.ResponseWriter, r *http.Request) {
 	var status int
 	vars := mux.Vars(r) // Decode route parameter
 	userID := vars["userID"]
@@ -238,10 +236,9 @@ func (api *API) patientShares(w http.ResponseWriter, r *http.Request) int {
 		api.b.Logger.Printf("Failed to encode response to JSON: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Internal Server Error"))
-		return http.StatusInternalServerError
+		return
 	}
 
 	w.Header().Add("Content-Type", "application/json; charset=utf-8")
 	w.Write(jsonResponse)
-	return http.StatusOK
 }

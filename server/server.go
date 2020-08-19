@@ -169,7 +169,7 @@ func (srv *Server) WaitOSSignals(done chan bool) {
 // @Success 200 {object} common.APIStatus
 // @Failure 500 {object} common.APIStatus
 // @Router /status [get]
-func (srv *Server) status(w http.ResponseWriter, r *http.Request) int {
+func (srv *Server) status(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json; charset=utf-8")
 
 	srv.logger.Printf("GET %s\n", r.URL.String())
@@ -183,12 +183,11 @@ func (srv *Server) status(w http.ResponseWriter, r *http.Request) int {
 		srv.logger.Printf("Failed to create JSON for %s: %v", r.URL.String(), err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("{\"status\": \"KO\", \"version\": \"0.0.0\"}"))
-		return http.StatusInternalServerError
+		return
 	}
 
 	w.WriteHeader(200)
 	w.Write(res)
-	return http.StatusOK
 }
 
 func (srv *Server) notFound(w http.ResponseWriter, r *http.Request) {
