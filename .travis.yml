@@ -1,9 +1,10 @@
-sudo: false
+os: linux
+dist: bionic
 
 language: go
 
 go:
-  - 1.12
+  - 1.14
 
 go_import_path: github.com/mdblp/gatekeeper
 
@@ -16,7 +17,7 @@ env:
 addons:
   apt:
     sources:
-      - mongodb-3.2-trusty
+      - mongodb-4.2-bionic
     packages:
       - mongodb-org-server
 
@@ -34,11 +35,11 @@ deploy:
     # Name of the S3 bucket to which your site should be uploaded.
     bucket: $AWS_BUCKET
     # Prevent Travis from deleting your built site so it can be uploaded.
-    skip_cleanup: true
+    cleanup: false
     # Path of the source directory containing your built site.
     local_dir: deploy
     # Path to a directory containing your built site.
-    upload-dir: deploy
+    upload_dir: deploy
     # Set the Cache-Control header.
     cache_control: "max-age=21600"
   # Deploy doc
@@ -52,11 +53,11 @@ deploy:
     # Name of the S3 bucket to which your site should be uploaded.
     bucket: com.diabeloop.yourloops.doc
     # Prevent Travis from deleting your built site so it can be uploaded.
-    skip_cleanup: true
+    cleanup: false
     # Path of the source directory containing your built site.
     local_dir: doc/openapi
     # Path to a directory containing your built site.
-    upload-dir: openapi/gatekeeper
+    upload_dir: openapi/gatekeeper
     # Set the Cache-Control header.
     cache_control: "max-age=21600"
   # Deploy SOUP list
@@ -67,9 +68,9 @@ deploy:
     secret_access_key: $AWS_SECRET_ACCESS_KEY
     region: $AWS_DEFAULT_REGION
     bucket: com.diabeloop.yourloops.doc
-    skip_cleanup: true
+    cleanup: false
     local_dir: doc/soup
-    upload-dir: soup/gatekeeper
+    upload_dir: soup/gatekeeper
     cache_control: "max-age=21600"
 
 services:
