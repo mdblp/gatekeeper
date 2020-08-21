@@ -32,6 +32,7 @@ import (
 	"syscall"
 
 	mux "github.com/gorilla/mux"
+	"github.com/mdblp/gatekeeper/portal"
 	"github.com/mdblp/gatekeeper/server/common"
 	v0 "github.com/mdblp/gatekeeper/server/v0"
 	v1 "github.com/mdblp/gatekeeper/server/v1"
@@ -59,11 +60,6 @@ type Server struct {
 	config     *Config
 	logger     *log.Logger
 }
-
-// BaseAPI infos for all API versions
-// type BaseAPI struct {
-// 	logger *log.Logger
-// }
 
 // NewConfig init a server config
 func NewConfig() *Config {
@@ -129,6 +125,7 @@ func (srv *Server) setRouter() bool {
 		Logger:          srv.logger,
 		PortalURL:       srv.config.PortalURL,
 		ShorelineSecret: srv.config.ShorelineSecret,
+		PortalClient:    portal.New(srv.logger, srv.config.PortalURL, srv.config.ShorelineSecret),
 	}
 
 	apiStatus := base.RequestLogger(srv.status)

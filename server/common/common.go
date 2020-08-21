@@ -23,6 +23,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/mdblp/gatekeeper/portal"
 )
 
 type (
@@ -31,6 +33,7 @@ type (
 		Logger          *log.Logger
 		PortalURL       *url.URL
 		ShorelineSecret string
+		PortalClient    *portal.Client
 	}
 
 	// APIStatus for /status route

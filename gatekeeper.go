@@ -24,7 +24,6 @@
 // @accept json
 // @produce json
 // @schemes https
-
 // @securityDefinitions.apikey TidepoolAuth
 // @in header
 // @name x-tidepool-session-token
@@ -44,6 +43,7 @@ import (
 const (
 	defaultPortalURL       = "http://localhost:9507"
 	defaultShorelineSecret = "This is a local API secret for everyone. BsscSHqSHiwrBMJsEGqbvXiuIUPAjQXU"
+	defaultServerSecret    = "This needs to be the same secret everywhere. YaHut75NsK1f9UKUXuWqxNN0RUwHFBCy"
 )
 
 func main() {

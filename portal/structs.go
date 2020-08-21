@@ -46,6 +46,29 @@ type Member struct {
 	ModifiedTime string `json:"modifiedTime,omitempty" bson:"modifiedTime,omitempty"`
 }
 
+// Group definition for OPA
+type Group struct {
+	Type string `json:"group"`
+}
+
+// UserGroup a group definition for a user (a team member)
+type UserGroup struct {
+	ID   string `json:"id"`
+	Role string `json:"role"`
+}
+
+// User definition for OPA
+type User struct {
+	Roles  []string    `json:"roles"`
+	Groups []UserGroup `json:"groups"`
+}
+
+// OPAUsersAndGroups user & groups for OPA rules
+type OPAUsersAndGroups struct {
+	Groups map[string]Group `json:"groups"`
+	Users  map[string]User  `json:"users"`
+}
+
 // APIFailure returned when an error occur
 type APIFailure struct {
 	Message string `json:"message"`

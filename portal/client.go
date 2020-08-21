@@ -3,6 +3,7 @@ package portal
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -25,12 +26,6 @@ type (
 	}
 )
 
-// XTidepoolSessionToken in the HTTP header
-const XTidepoolSessionToken = "x-tidepool-session-token"
-
-// XTidepoolTraceSession in the HTTP header
-const XTidepoolTraceSession = "x-tidepool-trace-session"
-
 // New portal client
 func New(logger *log.Logger, portalURL *url.URL, shorelineSecret string) *Client {
 	return &Client{
@@ -42,8 +37,8 @@ func New(logger *log.Logger, portalURL *url.URL, shorelineSecret string) *Client
 
 // ClinicalShares do GET /teams/v1/members/clinician-shares
 func (c *Client) ClinicalShares(r *http.Request, userID string) (WhoHaveAccessTo, int, error) {
-	token := r.Header.Get(XTidepoolSessionToken)
-	trace := r.Header.Get(XTidepoolTraceSession)
+	token := r.Header.Get(shoreline.XTidepoolSessionToken)
+	trace := r.Header.Get(shoreline.XTidepoolTraceSession)
 
 	if token == "" {
 		return nil, http.StatusForbidden, nil
@@ -64,10 +59,10 @@ func (c *Client) ClinicalShares(r *http.Request, userID string) (WhoHaveAccessTo
 		return nil, http.StatusInternalServerError, err
 	}
 
-	request.Header.Add(XTidepoolSessionToken, token)
+	request.Header.Add(shoreline.XTidepoolSessionToken, token)
 	if trace != "" {
 		// Forward the trace session id
-		request.Header.Add(XTidepoolTraceSession, trace)
+		request.Header.Add(shoreline.XTidepoolTraceSession, trace)
 	}
 
 	hc := http.Client{}
@@ -93,8 +88,8 @@ func (c *Client) ClinicalShares(r *http.Request, userID string) (WhoHaveAccessTo
 
 // PatientShares return whos a patient is sharing to
 func (c *Client) PatientShares(r *http.Request, userID string) (WhoHaveAccessTo, int, error) {
-	token := r.Header.Get(XTidepoolSessionToken)
-	trace := r.Header.Get(XTidepoolTraceSession)
+	token := r.Header.Get(shoreline.XTidepoolSessionToken)
+	trace := r.Header.Get(shoreline.XTidepoolTraceSession)
 
 	if token == "" {
 		return nil, http.StatusForbidden, nil
@@ -117,10 +112,10 @@ func (c *Client) PatientShares(r *http.Request, userID string) (WhoHaveAccessTo,
 		return nil, http.StatusForbidden, err
 	}
 
-	request.Header.Add(XTidepoolSessionToken, token)
+	request.Header.Add(shoreline.XTidepoolSessionToken, token)
 	if trace != "" {
 		// Forward the trace session id
-		request.Header.Add(XTidepoolTraceSession, trace)
+		request.Header.Add(shoreline.XTidepoolTraceSession, trace)
 	}
 
 	hc := http.Client{}
@@ -143,4 +138,35 @@ func (c *Client) PatientShares(r *http.Request, userID string) (WhoHaveAccessTo,
 	}
 
 	return results, http.StatusOK, nil
+}
+
+// OpaGroups fetch information for OPA
+func (c *Client) OpaGroups() ([]byte, error) {
+	// var results *OPAUsersAndGroups = &OPAUsersAndGroups{}
+
+	serverToken, err := shoreline.ServerLogin()
+	if err != nil {
+		return nil, err
+	}
+
+	portalURL := c.portalURL.String() + "/teams/v1/team/opa"
+	request, err := http.NewRequest(http.MethodGet, portalURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	request.Header.Add(shoreline.XTidepoolSessionToken, serverToken)
+
+	hc := http.Client{}
+	response, err := hc.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		return nil, fmt.Errorf("%s %s - %d", request.Method, request.URL.String(), response.StatusCode)
+	}
+
+	return ioutil.ReadAll(response.Body)
 }
