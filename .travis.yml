@@ -14,13 +14,6 @@ env:
     - BUILD_OPENAPI_DOC=true
     - BUILD_SOUP=true
 
-addons:
-  apt:
-    sources:
-      - mongodb-4.2-bionic
-    packages:
-      - mongodb-org-server
-
 deploy:
   # Control deployment by setting a value for `on`. Setting the `branch`
   # option to `master` means Travis will only attempt a deployment on
@@ -75,8 +68,8 @@ deploy:
 
 services:
   - docker
-  - mongodb
 
 script:
-  - make all
+  - go install github.com/swaggo/swag/cmd/swag
+  - make
   - make test

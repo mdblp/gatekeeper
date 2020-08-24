@@ -3,6 +3,7 @@ package shoreline
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -21,6 +22,14 @@ type TokenClaims struct {
 	jwt.StandardClaims
 }
 
+const defaultShorelineURL = "http://localhost:9107"
+
+// DefaultShorelineSecret used to sign JWT tokens
+const DefaultShorelineSecret = "This is a local API secret for everyone. BsscSHqSHiwrBMJsEGqbvXiuIUPAjQXU"
+
+// DefaultServerSecret used for server tokens
+const DefaultServerSecret = "This needs to be the same secret everywhere. YaHut75NsK1f9UKUXuWqxNN0RUwHFBCy"
+
 // XTidepoolSessionToken in the HTTP header
 const XTidepoolSessionToken = "x-tidepool-session-token"
 
@@ -34,12 +43,14 @@ const XTidepoolServerName = "x-tidepool-server-name"
 const XTidepoolServerSecret = "x-tidepool-server-secret"
 
 var tokenSignMethod = jwt.SigningMethodHS256.Name
+var errInvalidToken = errors.New("Invalid token")
 var errSessionTokenInvalid = errors.New("SessionToken is invalid")
+var errSessionTokenHasExpired = errors.New("SessionToken has expired")
 
 // UnpackAndVerifyToken validate a shoreline token
 func UnpackAndVerifyToken(packedToken string, secret string) (*TokenClaims, error) {
 	if packedToken == "" {
-		return nil, fmt.Errorf("Invalid token")
+		return nil, errInvalidToken
 	}
 
 	keyFunc := func(t *jwt.Token) (interface{}, error) {
@@ -52,7 +63,7 @@ func UnpackAndVerifyToken(packedToken string, secret string) (*TokenClaims, erro
 	parser.UseJSONNumber = true
 	jwtToken, err := parser.ParseWithClaims(packedToken, &TokenClaims{}, keyFunc)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Token parse error: %s", err)
 	}
 	if !jwtToken.Valid {
 		return nil, errSessionTokenInvalid
@@ -61,21 +72,23 @@ func UnpackAndVerifyToken(packedToken string, secret string) (*TokenClaims, erro
 	claims := jwtToken.Claims.(*TokenClaims)
 
 	if !claims.VerifyExpiresAt(time.Now().UTC().Unix(), true) {
-		return nil, errSessionTokenInvalid
+		return nil, errSessionTokenHasExpired
 	}
 
 	return claims, nil
 }
 
 // ServerLogin with shoreline
-func ServerLogin() (string, error) {
+func ServerLogin(logger *log.Logger) (string, error) {
 	shorelineHost := os.Getenv("SHORELINE_HOST")
 	if shorelineHost == "" {
-		return "", fmt.Errorf("Missing env var SHORELINE_HOST")
+		shorelineHost = defaultShorelineURL
+		logger.Printf("Missing env var SHORELINE_HOST, using default: %s", shorelineHost)
 	}
 	serverSecret := os.Getenv("SERVER_SECRET")
 	if serverSecret == "" {
-		return "", fmt.Errorf("Missing env var SERVER_SECRET")
+		serverSecret = DefaultServerSecret
+		logger.Printf("Missing env var SERVER_SECRET, using default")
 	}
 
 	shorelineURL, err := url.Parse(shorelineHost)

@@ -110,12 +110,19 @@ func (srv *Server) Start() error {
 }
 
 // Stop (gracefully) the http server
-func (srv *Server) Stop() {
+func (srv *Server) Stop(out chan<- bool) error {
 	srv.logger.Printf("Stopping the server")
-	err := srv.httpServer.Shutdown(context.Background())
+	ctx := context.Background()
+	err := srv.httpServer.Shutdown(ctx)
 	if err != nil {
 		srv.logger.Fatalf("Failed to gracefully stop the server: %v", err)
 	}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case out <- true:
+	}
+	return nil
 }
 
 func (srv *Server) setRouter() bool {
@@ -139,23 +146,25 @@ func (srv *Server) setRouter() bool {
 	}
 	apiV0.Init(router, apiStatus)
 
-	mux.NewRouter().MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
-		return true
-	}).HandlerFunc(srv.notFound)
+	// mux.NewRouter().MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
+	// 	return true
+	// }).HandlerFunc(srv.notFound)
 
 	return true
 }
 
 // WaitOSSignals to stop the server
-func (srv *Server) WaitOSSignals(done chan bool) {
+func (srv *Server) WaitOSSignals(done chan<- bool) {
 	srv.logger.Printf("Waiting for OS signal to stop\n")
 
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, syscall.SIGINT, syscall.SIGTERM)
 	for {
 		<-sigc
-		srv.Stop()
-		done <- true
+		err := srv.Stop(done)
+		if err != nil {
+			srv.logger.Print(err)
+		}
 	}
 }
 

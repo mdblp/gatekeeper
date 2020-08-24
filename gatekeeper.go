@@ -37,14 +37,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mdblp/gatekeeper/portal"
 	"github.com/mdblp/gatekeeper/server"
+	"github.com/mdblp/gatekeeper/shoreline"
 )
 
-const (
-	defaultPortalURL       = "http://localhost:9507"
-	defaultShorelineSecret = "This is a local API secret for everyone. BsscSHqSHiwrBMJsEGqbvXiuIUPAjQXU"
-	defaultServerSecret    = "This needs to be the same secret everywhere. YaHut75NsK1f9UKUXuWqxNN0RUwHFBCy"
-)
+const ()
 
 func main() {
 	var err error
@@ -54,12 +52,13 @@ func main() {
 	serverConfig := server.NewConfig()
 	serverConfig.ShorelineSecret = os.Getenv("SHORELINE_SECRET")
 	if serverConfig.ShorelineSecret == "" {
-		serverConfig.ShorelineSecret = defaultShorelineSecret
+		logger.Printf("Missing SHORELINE_SECRET env, using default")
+		serverConfig.ShorelineSecret = shoreline.DefaultShorelineSecret
 	}
 	portalURL := os.Getenv("PORTAL_API_HOST")
 	if !strings.HasPrefix(portalURL, "http") {
-		// Default value
-		portalURL = defaultPortalURL
+		portalURL = portal.DefaultPortalURL
+		logger.Printf("Missing PORTAL_API_HOST env, using default: %s", portalURL)
 	}
 	serverConfig.PortalURL, err = url.Parse(portalURL)
 	if err != nil {
@@ -88,6 +87,7 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
+
 	<-done
 
 	logger.Print("Service stopped")

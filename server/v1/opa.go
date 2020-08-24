@@ -1,4 +1,4 @@
-// Package v1
+// Package v1 authz api
 /*
  * Gatekeeper for Yourloops - Authorizations management
  * Gatekeeper API v1
@@ -24,6 +24,7 @@ import (
 	"context"
 	"encoding/json"
 	"text/template"
+	"time"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/storage/inmem"
@@ -71,53 +72,74 @@ const staticRuleGetDataV1Ranges = `
 package get.data.v1.ranges
 import data.common
 default allow = false
-claims = common.claims
+
 is_our_request {
 	input.request.path == "/data/v1/ranges"
 	common.is_get(input.request)
 	common.have_session_token(input.request)
 }
+
+# If we can see our data
 allow {
 	is_our_request
-	common.claims["svr"] != "yes"
-	common.claims["roles"][_] == "patient"
+	common.claims.svr != "yes"
+	common.claims.roles[_] == "patient"
 	not common.have_user_ids
 }
-results[user_id] = allowed {
+# Else if we ask for others users
+set_our_groups := { g | g := data.users[common.claims.usr].groupsList[_] }
+
+result_by_users[user_id] = allowed{
+	is_our_request
+	common.have_user_ids
 	user_id := input.userIds[_]
-	# Target user must be a patient
+	set_patient_groups := {g | g = data.users[user_id].groupsList[_]}
+	have_common_group := count(set_patient_groups & set_our_groups) > 0
 	is_patient := data.users[user_id].roles[_] == "patient"
-	# We must have a common group
-
-	allowed = {
-		is_patient
-	}
+	allowed := have_common_group == is_patient
 }
-groups = data.groups
-users = data.users
-`
 
-// groups := data.groups
-// users := data.users
-
-const staticRulesAll = `
-package authz.all
-
-import data.common
-claims = common.claims
-import data.get.data.v1.ranges
-
-default allow = false
 allow {
-	data.get.data.v1.ranges.allow
+	# We have at least one userId which can be see
+	result_by_users[_] == true
 }
+
+results["allow"] = allow
+results["by_users"] = result_by_users
+results["claims"] = common.claims
+# results["users"] = data.users
 `
 
 var staticRules = map[string]string{
-	"all":                staticRulesAll,
 	"get.data.v1.ranges": staticRuleGetDataV1Ranges,
-	// "patient":   modelAuthTokenPatient,
-	// "clinic":    modelAuthTokenClinic,
+}
+
+func (a *API) fetchUserGroupsUpdate() {
+	a.b.Logger.Print("Updating users & groups from portal-api: started")
+	const nRetry = 4
+	for i := 0; i < nRetry; i++ {
+		if i > 0 {
+			time.Sleep(time.Duration(3*i) * time.Second)
+		}
+		opaGroupsAsJSON, err := a.b.PortalClient.OpaGroups()
+		if err != nil {
+			a.b.Logger.Printf("Updating users & groups from portal-api: Failed to fetch data: %s", err)
+			continue
+		}
+
+		var opaGroups map[string]interface{}
+		err = json.Unmarshal(opaGroupsAsJSON, &opaGroups)
+		if err != nil {
+			a.b.Logger.Printf("Updating users & groups from portal-api: Failed to parse json: %v", err)
+			continue
+		}
+
+		a.usersAndGroups = inmem.NewFromObject(opaGroups)
+		a.b.Logger.Print("Updating users & groups from portal-api: done")
+		return
+	}
+
+	a.b.Logger.Printf("Updating users & groups from portal-api: failed %d times, giving up", nRetry)
 }
 
 func (a *API) initRego() bool {
@@ -126,21 +148,15 @@ func (a *API) initRego() bool {
 	var module *ast.Module
 	var modules = make(map[string]*ast.Module)
 
-	a.ctx = context.TODO()
+	// Default empty users & groups
+	opaGroups := make(map[string]interface{}, 2)
+	opaGroups["users"] = make(map[string]interface{}, 0)
+	opaGroups["groups"] = make(map[string]interface{}, 0)
+	a.usersAndGroups = inmem.NewFromObject(opaGroups)
 
-	opaGroupsAsJSON, err := a.b.PortalClient.OpaGroups()
-	if err != nil {
-		a.b.Logger.Print("Failed to fetch from portal-api")
-		a.b.Logger.Print(err)
-		return false
-	}
+	go a.fetchUserGroupsUpdate()
 
-	var opaGroups map[string]interface{}
-	err = json.Unmarshal(opaGroupsAsJSON, &opaGroups)
-	if err != nil {
-		a.b.Logger.Printf("Failed to parse json: %v", err)
-		return false
-	}
+	a.ctx = context.Background()
 
 	tpl, err := template.New("rego").Parse(staticRulesCommon)
 	if err != nil {
@@ -161,20 +177,9 @@ func (a *API) initRego() bool {
 		modules[name] = module
 	}
 
-	// values, err := ast.InterfaceToValue(opaGroups)
-	// if err != nil {
-	// 	fmt.Print("Failed to convert portal JSON to OPA value")
-	// 	fmt.Print(err)
-	// 	return false
-	// }
-	// a.term = ast.NewTerm(values)
-	// fmt.Print(a.term.String())
-	// fmt.Print(a.term.Vars().String())
-
-	a.usersAndGroups = inmem.NewFromObject(opaGroups)
-
 	a.compiler = ast.NewCompiler()
 	a.compiler.Compile(modules)
+
 	if a.compiler.Failed() {
 		a.b.Logger.Printf("Failed to compile modules: %v", a.compiler.Errors)
 		return false

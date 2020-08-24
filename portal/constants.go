@@ -17,6 +17,9 @@
 package portal
 
 const (
+	// DefaultPortalURL used to connect to portal
+	DefaultPortalURL = "http://localhost:9507"
+
 	// TeamTypeClinic a team type
 	TeamTypeClinic = "clinic"
 	// TeamTypeTrials a team type

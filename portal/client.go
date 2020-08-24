@@ -144,7 +144,7 @@ func (c *Client) PatientShares(r *http.Request, userID string) (WhoHaveAccessTo,
 func (c *Client) OpaGroups() ([]byte, error) {
 	// var results *OPAUsersAndGroups = &OPAUsersAndGroups{}
 
-	serverToken, err := shoreline.ServerLogin()
+	serverToken, err := shoreline.ServerLogin(c.logger)
 	if err != nil {
 		return nil, err
 	}

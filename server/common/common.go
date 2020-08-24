@@ -44,12 +44,12 @@ type (
 
 	httpResponseWriter struct {
 		w          http.ResponseWriter
-		statusCode int
+		statusCode *int
 	}
 )
 
 // RequestLoggerFunc type to simplify func signatures
-type RequestLoggerFunc func(fn func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request)
+type RequestLoggerFunc func(http.HandlerFunc) http.HandlerFunc
 
 func (hrw httpResponseWriter) Header() http.Header {
 	return hrw.w.Header()
@@ -60,22 +60,23 @@ func (hrw httpResponseWriter) Write(v []byte) (int, error) {
 }
 
 func (hrw httpResponseWriter) WriteHeader(statusCode int) {
-	hrw.statusCode = statusCode
+	*hrw.statusCode = statusCode
 	hrw.w.WriteHeader(statusCode)
 }
 
 // RequestLogger middleware (finalware?) to log received requests
-func (a *Base) RequestLogger(fn func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+func (a *Base) RequestLogger(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		statusCode := http.StatusOK
 		hrw := httpResponseWriter{
 			w:          w,
-			statusCode: http.StatusOK,
+			statusCode: &statusCode,
 		}
 
 		start := time.Now().UTC()
 		fn(hrw, r)
 		end := time.Now().UTC()
 		dur := end.Sub(start).Milliseconds()
-		a.Logger.Printf("%s - %s %s HTTP/%d.%d %d - %d ms", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.ProtoMajor, r.ProtoMinor, hrw.statusCode, dur)
+		a.Logger.Printf("%s - %s %s HTTP/%d.%d %d - %d ms", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.ProtoMajor, r.ProtoMinor, statusCode, dur)
 	}
 }

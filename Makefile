@@ -15,7 +15,7 @@
 
 GOPATH ?= ~/go
 GO111MODULE = on
-GOCC = go
+GOC = go
 
 DEPLOY_DOC = docs/soup
 
@@ -27,8 +27,8 @@ dist: build
 	cp -a start.sh dist/
 
 build: clean
-	GOPATH=$(GOPATH) GO111MODULE=$(GO111MODULE) $(GOCC) mod tidy
-	GOPATH=$(GOPATH) GO111MODULE=$(GO111MODULE) $(GOCC) build
+	GOPATH=$(GOPATH) GO111MODULE=$(GO111MODULE) $(GOC) mod tidy
+	GOPATH=$(GOPATH) GO111MODULE=$(GO111MODULE) $(GOC) build -v
 	chmod 755 gatekeeper
 
 doc: $(GOPATH)/bin/swag
@@ -47,4 +47,4 @@ clean:
 	rm -rf soup/gatekeeper
 
 test:
-	GOPATH=$(GOPATH) $(GOCC) test
+	GOPATH=$(GOPATH) $(GOC) test
