@@ -3,3 +3,5 @@
 .dockerignore
 .artifactignore
 doc
+.version
+artifact_go.sh

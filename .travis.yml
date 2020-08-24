@@ -4,7 +4,7 @@ dist: bionic
 language: go
 
 go:
-  - 1.14
+  - 1.14.x
 
 go_import_path: github.com/mdblp/gatekeeper
 
@@ -73,3 +73,4 @@ script:
   - go install github.com/swaggo/swag/cmd/swag
   - make
   - make test
+  - make docker

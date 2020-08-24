@@ -42,12 +42,19 @@ import (
 	"github.com/mdblp/gatekeeper/shoreline"
 )
 
-const ()
+// Variables to be injected at build time
+// E.g. go build -ldflags "-X $GO_COMMON_PATH/clients/version.ReleaseNumber=$VERSION"
+var (
+	// Release number. i.e. 1.2.3
+	ReleaseNumber string
+	// Full commit id. i.e. e0c73b95646559e9a3696d41711e918398d557fb
+	FullCommit string
+)
 
 func main() {
 	var err error
 	logger := log.New(os.Stdout, "gatekeeper:", log.LstdFlags|log.LUTC|log.Lshortfile)
-	logger.Printf("Starting service: %v\n", os.Environ())
+	logger.Printf("Starting service: %s (%s)", ReleaseNumber, FullCommit)
 
 	serverConfig := server.NewConfig()
 	serverConfig.ShorelineSecret = os.Getenv("SHORELINE_SECRET")

@@ -9,3 +9,5 @@ CHANGELOG.md
 README.md
 Dockerfile
 LICENSE
+start.sh
+artifact_go.sh

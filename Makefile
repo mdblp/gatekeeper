@@ -19,6 +19,12 @@ GOC = go
 
 DEPLOY_DOC = docs/soup
 
+PROG_VERSION = v0.0.0
+PROG_COMMIT = n/a
+include .version
+
+.PHONY: version all
+
 all: dist doc soup
 
 dist: build
@@ -26,9 +32,9 @@ dist: build
 	mv gatekeeper dist/
 	cp -a start.sh dist/
 
-build: clean
+build: clean .version
 	GOPATH=$(GOPATH) GO111MODULE=$(GO111MODULE) $(GOC) mod tidy
-	GOPATH=$(GOPATH) GO111MODULE=$(GO111MODULE) $(GOC) build -v
+	GOPATH=$(GOPATH) GO111MODULE=$(GO111MODULE) $(GOC) build -ldflags "-X main.ReleaseNumber=$(PROG_VERSION) -X main.FullCommit=$(PROG_COMMIT)"
 	chmod 755 gatekeeper
 
 doc: $(GOPATH)/bin/swag
@@ -40,11 +46,24 @@ soup:
 	mkdir -p doc/soup
 	go list -f '## {{printf "%s \n\t* description: \n\t* version: %s\n\t* webSite: https://%s\n\t* sources:" .Path .Version .Path}}' -m all >> doc/soup/soup.md
 
+docker:
+	$(eval VERSION=$(shell echo $(PROG_VERSION) | sed 's/dblp.//'))
+	docker build -t docker.ci.diabeloop.eu/gatekeeper:$(VERSION) .
+
+.version:
+	$(eval PROG_VERSION=$(shell git describe --abbrev=0 --tags))
+	$(eval PROG_COMMIT=$(shell git rev-parse HEAD))
+	$(shell echo PROG_VERSION=$(PROG_VERSION) > .version)
+	$(shell echo PROG_COMMIT=$(PROG_COMMIT) >> .version)
+
 clean:
 	rm -f gatekeeper
 	rm -rf dist
 	rm -rf doc
 	rm -rf soup/gatekeeper
+
+mrproper: clean
+	rm .version
 
 test:
 	GOPATH=$(GOPATH) $(GOC) test

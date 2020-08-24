@@ -4,3 +4,5 @@ doc/*
 .vscode/launch.json
 gatekeeper
 dist
+.version
+artifact_go.sh
