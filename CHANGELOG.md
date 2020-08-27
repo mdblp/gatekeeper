@@ -1,7 +1,7 @@
 # Gatekeeper
 Authorization client and server for tidepool
 
-## Unreleased
+## 0.4.0
 ### Changed
 - PT-1436 Make service start without MongoDb available
 
