@@ -2,7 +2,7 @@
 FROM node:10.15.3-alpine as base
 
 ARG npm_token
-ENV nexus_token=$npm_token
+ENV NEXUS_TOKEN=$npm_token
 WORKDIR /app
 RUN apk --no-cache update && \
     apk --no-cache upgrade && \
