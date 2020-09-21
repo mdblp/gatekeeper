@@ -1,6 +1,10 @@
 # Gatekeeper
 Authorization client and server for tidepool
 
+## 0.4.1 - 2020-09-21
+### Engineering
+- Fix security audit && update to mongo 4.2 
+
 ## 0.4.0
 ### Changed
 - PT-1436 Make service start without MongoDb available

@@ -1,6 +1,6 @@
 {
  "name": "gatekeeper",
- "version": "0.4.0",
+ "version": "0.4.1",
  "description": "Authorization server",
  "main": "index.js",
  "directories": {
@@ -22,18 +22,18 @@
  "dependencies": {
   "amoeba": "0.8.1",
   "async": "2.6.2",
-  "bunyan": "1.8.12",
-  "hakken": "^0.2.1",
-  "lodash": "^4.17.15",
-  "mongodb": "^3.5.9",
-  "restify": "8.3.0",
-  "user-api-client": "^0.5.1"
+  "bunyan": "^1.8.14",
+  "hakken": "^0.2.2",
+  "lodash": "^4.17.20",
+  "mongodb": "^3.6.2",
+  "restify": "^8.5.1",
+  "user-api-client": "0.5.2"
  },
  "devDependencies": {
   "@forfuture/apidoc-openapi": "0.0.1",
-  "audit-ci": "^2.4.2",
+  "audit-ci": "^3.1.1",
   "chai-http": "^4.3.0",
-  "jshint": "2.10.2",
+  "jshint": "^2.12.0",
   "mocha": "6.1.4",
   "salinity": "0.0.8",
   "swagger-jsdoc": "^4.0.0",
