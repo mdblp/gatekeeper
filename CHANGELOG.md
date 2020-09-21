@@ -1,9 +1,9 @@
 # Gatekeeper
 Authorization client and server for tidepool
 
-## Unreleased
+## 0.4.1 - 2020-09-21
 ### Engineering
-- Fix security audit && update to mongo 4.X 
+- Fix security audit && update to mongo 4.2 
 
 ## 0.4.0
 ### Changed

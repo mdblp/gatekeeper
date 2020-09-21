@@ -1,6 +1,6 @@
 {
  "name": "gatekeeper",
- "version": "0.4.0",
+ "version": "0.4.1",
  "description": "Authorization server",
  "main": "index.js",
  "directories": {
@@ -27,7 +27,7 @@
   "lodash": "^4.17.20",
   "mongodb": "^3.6.2",
   "restify": "^8.5.1",
-  "user-api-client": "0.5.2-rc1"
+  "user-api-client": "0.5.2"
  },
  "devDependencies": {
   "@forfuture/apidoc-openapi": "0.0.1",
