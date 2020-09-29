@@ -3,7 +3,7 @@ Authorization client and server for tidepool
 
 ## 0.4.2 - 2020-09-29
 ### Engineering
-- Base gatekeeper image on node:10-alpine
+- PT-1526 Base gatekeeper image on node:10-alpine
 
 ## 0.4.1 - 2020-09-21
 ### Engineering
