@@ -24,6 +24,7 @@ deploy:
   # option to `master` means Travis will only attempt a deployment on
   # builds of your repo's master branch (e.g., after you merge a PR).
   - provider: s3
+    edge: true
     on:
       tags: true
     # You can refer to environment variables from Travis repo settings!
@@ -42,6 +43,7 @@ deploy:
     cache_control: "max-age=21600"
   # Deploy doc
   - provider: s3
+    edge: true
     on:
       tags: true
     # You can refer to environment variables from Travis repo settings!
@@ -60,6 +62,7 @@ deploy:
     cache_control: "max-age=21600"
   # Deploy SOUP list
   - provider: s3
+    edge: true
     on:
       tags: true
     access_key_id: $AWS_ACCESS_KEY_ID
