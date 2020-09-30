@@ -1,5 +1,5 @@
 ### Stage 0 - Base image
-FROM node:10.15.3-alpine as base
+FROM node:10-alpine as base
 
 ARG npm_token
 ENV NEXUS_TOKEN=$npm_token
@@ -7,6 +7,7 @@ WORKDIR /app
 RUN apk --no-cache update && \
     apk --no-cache upgrade && \
     apk add --no-cache --virtual .build-dependencies python make g++ && \
+    npm install -g npm@latest && \
     mkdir -p node_modules && chown -R node:node .
 
 
