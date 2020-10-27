@@ -1,6 +1,10 @@
 # Gatekeeper
 Authorization client and server for tidepool
 
+## 0.4.3 - 2020-10-26
+### Engineering
+- YLP-241 Review openapi generation so we can serve it through a website
+
 ## 0.4.2 - 2020-09-29
 ### Engineering
 - PT-1526 Base gatekeeper image on node:10-alpine

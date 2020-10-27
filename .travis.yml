@@ -46,19 +46,13 @@ deploy:
     edge: true
     on:
       tags: true
-    # You can refer to environment variables from Travis repo settings!
     access_key_id: $AWS_ACCESS_KEY_ID
     secret_access_key: $AWS_SECRET_ACCESS_KEY
     region: $AWS_DEFAULT_REGION
-    # Name of the S3 bucket to which your site should be uploaded.
-    bucket: com.diabeloop.yourloops.doc
-    # Prevent Travis from deleting your built site so it can be uploaded.
+    bucket: com.diabeloop.backloops.docs
     skip_cleanup: true
-    # Path of the source directory containing your built site.
     local_dir: doc/openapi
-    # Path to a directory containing your built site.
     upload-dir: openapi/gatekeeper
-    # Set the Cache-Control header.
     cache_control: "max-age=21600"
   # Deploy SOUP list
   - provider: s3
@@ -68,7 +62,7 @@ deploy:
     access_key_id: $AWS_ACCESS_KEY_ID
     secret_access_key: $AWS_SECRET_ACCESS_KEY
     region: $AWS_DEFAULT_REGION
-    bucket: com.diabeloop.yourloops.doc
+    bucket: com.diabeloop.backloops.docs
     skip_cleanup: true
     local_dir: doc/soup
     upload-dir: soup/gatekeeper

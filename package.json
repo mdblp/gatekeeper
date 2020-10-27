@@ -1,6 +1,6 @@
 {
  "name": "gatekeeper",
- "version": "0.4.2",
+ "version": "0.4.3",
  "description": "Authorization server",
  "main": "index.js",
  "directories": {
@@ -13,7 +13,7 @@
   "audit": "./node_modules/.bin/audit-ci --moderate --registry=https://registry.npmjs.org",
   "prebuild-doc": "mkdir -p doc/openapi",
   "prebuild-soup": "mkdir -p doc/soup",
-  "build-doc": "swagger-jsdoc -o doc/openapi/${npm_package_name}-${npm_package_version}-swagger.json -d swaggerDef.js lib/*.js",
+  "build-doc": "./buildDoc.sh ${npm_package_name} ${npm_package_version}",
   "build-soup": "release-helper gen-dep-report doc/soup/${npm_package_name}-${npm_package_version}-soup.md"
  },
  "repository": "https://github.com/tidepool-org/gatekeeper.git",
